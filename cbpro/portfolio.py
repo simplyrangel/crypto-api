@@ -14,43 +14,78 @@ class portfolio(apiwrapper):
     def __init__(
         self,
         name,
-        api_key_file,
         save_loc="bin",
         ):
-        apiwrapper.__init__(self,api_key_file)
+        apiwrapper.__init__(self)
         self.name = name
         self.save_loc = save_loc
         self.holdings = None
         self.ledger = None
         self.daily_history = None
         self.usd_deposits = None
+        self.last_save = None
         
     def auto_setup(self):
         self.get_holdings()
         self.get_ledger()
         self.get_daily_history()
         self.get_usd_deposits()
+    
+    def return_holdings(self):
+        if type(self.holdings) is pd.DataFrame:
+            return self.holdings.copy()
+        else:
+            return "Error; holdings not defined."
+    
+    def return_ledger(self):
+        if type(self.ledger) is pd.DataFrame:
+            return self.ledger.copy()
+        else:
+            return "Error; holdings not defined."
+    
+    def return_daily_history(self):
+        if type(self.daily_history) is pd.DataFrame:
+            return self.daily_history.copy()
+        else:
+            return "Error; daily-history not defined."
+    
+    def return_usd_deposits(self):
+        if type(self.usd_deposits) is pd.DataFrame:
+            return self.usd_deposits.copy()
+        else:
+            return "Error; usd-deposits not defined."           
         
     def save(self):
-        self.holdings.to_excel("%s/%s-holdings.xlsx"%(
-            self.save_loc,
-            self.name,
-            ))
-        self.ledger.to_excel("%s/%s-ledger.xlsx"%(
-            self.save_loc,
-            self.name,
-            ))
-        self.daily_history.to_excel("%s/%s-daily-history.xlsx"%(
-            self.save_loc,
-            self.name,
-            ))
-        self.usd_deposits.to_excel("%s/%s-usd-deposits.xlsx"%(
-            self.save_loc,
-            self.name,
-            ))
-        with open("%s/%s.pkl"%(self.save_loc,self.name),"wb") as of:
+        self.last_save = datetime.datetime.now()
+        last_save_str = self.last_save.strftime("%Y-%m-%dT%H-%M-%S")
+        if type(self.holdings) is pd.DataFrame:
+            self.holdings.to_excel("%s/%s-%s-holdings.xlsx"%(
+                self.save_loc,
+                last_save_str,
+                self.name,
+                ))
+        if type(self.ledger) is pd.DataFrame:        
+            self.ledger.to_excel("%s/%s-%s-ledger.xlsx"%(
+                self.save_loc,
+                last_save_str,
+                self.name,
+                ))
+        if type(self.daily_history) is pd.DataFrame:        
+            self.daily_history.to_excel("%s/%s-%s-daily-history.xlsx"%(
+                self.save_loc,
+                last_save_str,
+                self.name,
+                ))
+        if type(self.usd_deposits) is pd.DataFrame:        
+            self.usd_deposits.to_excel("%s/%s-%s-usd-deposits.xlsx"%(
+                self.save_loc,
+                last_save_str,
+                self.name,
+                ))
+        pkl_file = "%s/%s-%s.pkl"%(self.save_loc,last_save_str, self.name)
+        with open(pkl_file,"wb") as of:
             pickle.dump(self,of)
-        
+
     def get_holdings(self):
         api_output = self.query("/accounts")
         df = pd.DataFrame(api_output)
@@ -122,10 +157,14 @@ class portfolio(apiwrapper):
         deposits.iloc[0,:] = 0.0
 
         # extract total USD deposits per day:
-        usd_ledger = self.ledger.loc[idx["USD",:],:].reset_index(
+        usdv = ["USD","USDC","USDT"]
+        usd_ledger = self.ledger.loc[idx[usdv,:],:].reset_index(
             ).set_index("created_at",
             )
-        usd_ledger = usd_ledger[usd_ledger.transfer_type=="deposit"]
+        usd_ledger = usd_ledger[
+            (usd_ledger.type=="deposit")
+            | (usd_ledger.type=="transfer")
+            ]
         usd_ledger = usd_ledger.resample("D").sum()
         usd_ledger = usd_ledger[usd_ledger.amount>0]
 

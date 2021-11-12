@@ -10,8 +10,12 @@ from cbpro._api import apiwrapper
 idx = pd.IndexSlice
 
 class markets(apiwrapper):
-    def __init__(self,api_key_file):
-        apiwrapper.__init__(self,api_key_file)
+    def __init__(
+        self,
+        name,
+        ):
+        apiwrapper.__init__(self)
+        self.name=name
 
     def available_products(self):
         api_output = self.query("/products")
@@ -31,6 +35,7 @@ class markets(apiwrapper):
         start,
         end,
         granularity, 
+        debug=False,
         ):
         # The max number of data per request is 300 candles. 
         # If the request is larger than 300 candles, the API 
@@ -103,7 +108,7 @@ class markets(apiwrapper):
                 )
             
             # query API:
-            api_output = self.query(endpoint)
+            api_output = self.query(endpoint,debug=debug)
             
             # store in multiindex dataframe:
             df = utils.format_price_history(api_output)
