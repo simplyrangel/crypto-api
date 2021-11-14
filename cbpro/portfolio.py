@@ -98,7 +98,7 @@ class portfolio(apiwrapper):
             )
         
     def get_ledger(self):
-        df = self.holdings
+        df = self.return_holdings()
         frames = []
         for coin in df.index:
             coin_id = df.loc[coin,"id"]
@@ -112,11 +112,12 @@ class portfolio(apiwrapper):
             )
         self.ledger = utils.update_ledger(mdf)
         
-    def get_daily_history(self):
-        coins_in_ledger = self.ledger.index.levels[0].tolist()
+    def get_balance_history(self):
+        ldgr = self.return_ledger()
+        coins_in_ledger = ldgr.index.levels[0].tolist()
         
         # create dataframe based on ledger contents:
-        di = self.ledger.index.levels[1].min().date()
+        di = ldgr.index.levels[1].min().date()
         de = datetime.datetime.today()
         date_range = pd.date_range(
             start=di,
@@ -133,7 +134,7 @@ class portfolio(apiwrapper):
         # add each coin's contents and return populated
         # multiindex dataframe:
         for coin in coins_in_ledger:
-            df = self.ledger.loc[idx[coin,:],:]
+            df = ldgr.loc[idx[coin,:],:]
             df = df.reset_index().set_index("created_at")
             df = df.resample("D").last().dropna(how="all")
             mdf.loc[df.index,coin] = df.balance
