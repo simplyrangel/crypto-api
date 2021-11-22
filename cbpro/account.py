@@ -28,9 +28,21 @@ class account(
         self.ledger=None
         self.usd_fills=None
         self.deposits=None
+        self.balance_sheet=None
         self.performance_data=None
         self._url_setup()
-        
+
+    def standard_setup(self):
+        if self.name=="USD":
+            self.get_ledger()
+            self.extract_balance_sheet()
+        else:
+            self.get_ledger()
+            self.get_usd_fills()
+            self.extract_deposits()
+            self.extract_balance_sheet()
+            self.extract_performance()
+
     def get_ledger(self):
         try:
             query_output = self.query(self.LEDGER_URL)
@@ -81,6 +93,25 @@ class account(
             return self.deposits.copy()
         else:
             return None
+
+    def extract_balance_sheet(self,frequency="D"):
+        col = "num_%s"%self.name
+        df = utils.new_history_df(
+            [col],
+            start=self.start_date,
+            end=self.end_date,
+            frequency=frequency,
+            )
+        ledger = self.return_ledger().resample(frequency).last()
+        df.loc[ledger.index,col] = ledger.balance.copy()
+        df = df.ffill()
+        self.balance_sheet = df
+
+    def return_balance_sheet(self):
+        if type(self.balance_sheet) is pd.DataFrame:
+            return self.balance_sheet.copy()
+        else:
+            return None    
 
     def extract_performance(
         self,
