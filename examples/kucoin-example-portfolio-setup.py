@@ -82,17 +82,18 @@ def ledger_request(currency,di,de):
             for item in ledger_data["items"]:
                 s = pd.Series(item)
                 frames.append(s)
-        else:
-            s = pd.Series()
         
         # make sure we never exceed 6 requests per second:
         time.sleep(0.17)
         
     # concatenate results into single dataframe and process
     # contents as necessary before returning:
-    results = pd.concat(frames,axis=1).transpose()
-    results.loc[:,"createdAt"] = results.createdAt.apply(
-        lambda x: datetime.fromtimestamp(x/1000))
+    if len(frames) > 0:
+        results = pd.concat(frames,axis=1).transpose()
+        results.loc[:,"createdAt"] = results.createdAt.apply(
+            lambda x: datetime.fromtimestamp(x/1000))
+    else:
+        results=None
     return results
 
 # let's look at RNDR account ledger:
@@ -138,21 +139,22 @@ def fills_request(currency_pair,di,de):
             for item in fills_data["items"]:
                 s = pd.Series(item)
                 frames.append(s)
-        else:
-            s = pd.Series()
 
     # concatenate results into single dataframe and process
     # contents as necessary before returning:
-    results = pd.concat(frames,axis=1).transpose()
-    results.loc[:,"createdAt"] = results.createdAt.apply(
-        lambda x: datetime.fromtimestamp(x/1000))
+    if len(frames) > 0:
+        results = pd.concat(frames,axis=1).transpose()
+        results.loc[:,"createdAt"] = results.createdAt.apply(
+            lambda x: datetime.fromtimestamp(x/1000))
+    else:
+        results=None
     return results
 
 # Let's take a look at RNDR-USDT fills: 
 di = "2021-10-01"
 de = "2021-11-24"
-rndr_fills = fills_request("RNDR-USDT",di,de)
-print(rndr_fills[["createdAt","size", "price", "funds", "fee"]])
+rndr_fills = fills_request("RNDR-USDC",di,de)
+print(rndr_fills)
 
 
 
