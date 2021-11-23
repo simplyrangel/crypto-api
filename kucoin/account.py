@@ -1,4 +1,7 @@
-"""Individual KuCoin trading account."""
+"""Individual KuCoin trading account.
+
+Assumes USD fills made with USDT. 
+"""
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -21,12 +24,12 @@ class account(apiwrapper):
         apiwrapper.__init__(self)
         self.read_keyfile(api_key_file)
         self.name=name
+        self.usd_pair="%s-USDT"%name
         self.ledger=pd.DataFrame()
         self.usd_fills=pd.DataFrame()
         self.deposits=pd.DataFrame()
         self.balance_sheet=pd.DataFrame()
         self.performance_data=pd.DataFrame()
-        #self._url_setup()
 
     def set_date_range(self,di,de):
         self.start_date = di
@@ -58,6 +61,33 @@ class account(apiwrapper):
     
     def return_ledger(self):
         return self.ledger.copy()
+
+    def get_usd_fills(self):
+        date_range = self._discretize_date_range("fill")
+        frames = []
+        for start_date in date_range:
+            end_date = start_date + timedelta(days=7)
+            te = int(end_date.timestamp()*1000)
+            ti = int(start_date.timestamp()*1000)
+            request = utils.fill_request_url(self.usd_pair,ti,te)
+            output = self.query(request)
+            output_data = output["data"]
+            if output_data["totalNum"] > 0:
+                for item in output_data["items"]:
+                    s = pd.Series(item)
+                    frames.append(s)
+            
+            # make sure we never exceed 3 requests per second:
+            time.sleep(0.33)
+        
+        # concatenate results into single dataframe:
+        if len(frames) > 0:
+            results = pd.concat(frames,axis=1).transpose()
+            utils.update_createdAt(results)
+            self.usd_fills = results
+    
+    def return_usd_fills(self):
+        return self.usd_fills.copy()
 
     def _discretize_date_range(self,request_type):
         freqbin = {

@@ -105,12 +105,6 @@ de = "2021-11-24"
 #rndr_ledger.to_excel("bin/kc-rndr-ledger.xlsx")
 #iotx_ledger.to_excel("bin/kc-iotx-ledger.xlsx")
 
-# now, let's do the same thing but with the account() class:
-rndr_account = account("RNDR",lcc_api_key)
-rndr_account.set_date_range(di,de)
-rndr_account.get_ledger()
-print(rndr_account.return_ledger())
-
 # ------------------------------------------------------------
 # Account fills. 
 # Account fills requests allow retrieval of data up to 
@@ -162,6 +156,25 @@ di = "2021-10-01"
 de = "2021-11-24"
 #rndr_fills = fills_request("RNDR-USDC",di,de)
 #print(rndr_fills)
+
+# ------------------------------------------------------------
+# KuCoin account() class.
+# ------------------------------------------------------------
+di = "2021-11-01"
+de = "2021-11-24"
+
+# do the same as above, but with the Kucoin account class:
+rndr_account = account("RNDR",lcc_api_key)
+rndr_account.set_date_range(di,de)
+#rndr_account.get_ledger()
+rndr_account.get_usd_fills()
+#rndr_ledger = rndr_account.return_ledger()
+rndr_usd_fills = rndr_account.return_usd_fills()
+print(rndr_usd_fills)
+
+
+
+
 
 
 
