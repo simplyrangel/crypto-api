@@ -20,6 +20,7 @@ plt.rcParams.update(
 # Coinbase API:
 sys.path.append("/home/jrangel/Projects/crypto/crypto-api")
 from kucoin._api import apiwrapper
+from kucoin.account import account
 
 # ------------------------------------------------------------
 # set up portfolio. 
@@ -104,6 +105,12 @@ de = "2021-11-24"
 #rndr_ledger.to_excel("bin/kc-rndr-ledger.xlsx")
 #iotx_ledger.to_excel("bin/kc-iotx-ledger.xlsx")
 
+# now, let's do the same thing but with the account() class:
+rndr_account = account("RNDR",lcc_api_key)
+rndr_account.set_date_range(di,de)
+rndr_account.get_ledger()
+print(rndr_account.return_ledger())
+
 # ------------------------------------------------------------
 # Account fills. 
 # Account fills requests allow retrieval of data up to 
@@ -153,8 +160,8 @@ def fills_request(currency_pair,di,de):
 # Let's take a look at RNDR-USDT fills: 
 di = "2021-10-01"
 de = "2021-11-24"
-rndr_fills = fills_request("RNDR-USDC",di,de)
-print(rndr_fills)
+#rndr_fills = fills_request("RNDR-USDC",di,de)
+#print(rndr_fills)
 
 
 
