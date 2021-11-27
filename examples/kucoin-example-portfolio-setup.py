@@ -18,7 +18,7 @@ plt.rcParams.update(
     })
 
 # Coinbase API:
-sys.path.append("/home/jrangel/Projects/crypto/crypto-api")
+sys.path.append("/home/johnrangel/Projects/crypto-api")
 from kucoin._api import apiwrapper
 from kucoin.account import account
 
@@ -26,7 +26,7 @@ from kucoin.account import account
 # set up portfolio. 
 # ------------------------------------------------------------
 # api wrapper setup:
-lcc_api_key = "bin/kucoin-large-cap-coins-key.secret"
+lcc_api_key = "bin/kucoin-system76-personal-laptop.secret"
 kuapi = apiwrapper()
 kuapi.read_keyfile(lcc_api_key)
 
