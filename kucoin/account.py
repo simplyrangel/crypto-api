@@ -57,6 +57,10 @@ class account(apiwrapper):
         if len(frames) > 0:
             results = pd.concat(frames, axis=1).transpose()
             utils.update_createdAt(results)
+            results = results.set_index("createdAt")
+            for col in ["amount","fee","balance"]:
+                results.loc[:,col] = results[col].apply(float)
+            results.loc[:,"balance"] = results.amount.cumsum()
             self.ledger=results
     
     def return_ledger(self):
@@ -84,10 +88,53 @@ class account(apiwrapper):
         if len(frames) > 0:
             results = pd.concat(frames,axis=1).transpose()
             utils.update_createdAt(results)
+            results = results.set_index("createdAt")
+            for col in ["price","size","funds","fee"]:
+                results.loc[:,col] = results[col].apply(float)
             self.usd_fills = results
     
     def return_usd_fills(self):
         return self.usd_fills.copy()
+
+    def extract_deposits(self):
+        usd_fills = self.return_usd_fills()
+        usd_fills["usd_volume"] = usd_fills.funds + usd_fills.fee
+        usd_fills = usd_fills[
+            (usd_fills.side=="buy")
+            ].resample("D"
+            ).sum(
+            )
+        cols = [
+            "usd",
+            "coin",
+            ]
+        deposits = utils.new_history_df(
+            cols,
+            start=self.start_date,
+            end=self.end_date,
+            )
+        tdates = usd_fills.index
+        deposits.loc[tdates,"usd"] = usd_fills.usd_volume
+        self.deposits = deposits
+    
+    def return_deposits(self):
+        return self.deposits.copy()
+
+    def extract_balance_sheet(self,frequency="D"):
+        col = "num_%s"%self.name
+        df = utils.new_history_df(
+            [col],
+            start=self.start_date,
+            end=self.end_date,
+            frequency=frequency,
+            )
+        ledger = self.return_ledger().resample(frequency).last()
+        df.loc[ledger.index,col] = ledger.balance.copy()
+        df = df.ffill()
+        self.balance_sheet = df
+    
+    def return_balance_sheet(self):
+        return self.balance_sheet.copy()
 
     def _discretize_date_range(self,request_type):
         freqbin = {
