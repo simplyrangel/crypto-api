@@ -17,7 +17,7 @@ plt.rcParams.update(
     "lines.linewidth": 3,
     })
 
-# Coinbase API:
+# KuCoin API:
 sys.path.append("/home/johnrangel/Projects/crypto-api")
 from kucoin._api import apiwrapper
 from kucoin.account import account
