@@ -9,6 +9,7 @@ import time
 
 # KuCoin toolset:
 from kucoin._api import apiwrapper
+from kucoin.markets import price_history
 import kucoin._utilities as utils
 
 # Pandas index slices:
@@ -60,6 +61,7 @@ class account(apiwrapper):
             results = results.set_index("createdAt")
             for col in ["amount","fee","balance"]:
                 results.loc[:,col] = results[col].apply(float)
+            results = results.sort_index()
             results.loc[:,"balance"] = results.amount.cumsum()
             self.ledger=results
     
@@ -136,10 +138,43 @@ class account(apiwrapper):
     def return_balance_sheet(self):
         return self.balance_sheet.copy()
 
+    def extract_performance(
+        self,
+        granularity=86400, #daily
+        ):
+        ph = price_history(
+            pair="%s-USDT"%self.name,
+            start=self.start_date,
+            end=self.end_date,
+            granularity=granularity,
+            )
+        cols = [
+            "usd_deposits",
+            "number_of_coins",
+            ]
+        df = utils.new_history_df(
+            cols,
+            start=self.start_date,
+            end=self.end_date,
+            )
+        deposits = self.return_deposits()
+        balance_sheet = self.return_balance_sheet()
+        num_coins = balance_sheet["num_%s"%self.name].copy()
+        df.loc[deposits.index,"usd_deposits"] = deposits.usd.cumsum()
+        df.loc[balance_sheet.index,"number_of_coins"] = num_coins
+        df["coin_price"] = ph.open.copy()
+        df = df.ffill()
+        df["coin_usd_value"] = df.coin_price*df.number_of_coins
+        df["performance"] = df.coin_usd_value/df.usd_deposits
+        self.performance_data = df
+    
+    def return_performance_data(self):
+        return self.performance_data.copy()
+
     def _discretize_date_range(self,request_type):
         freqbin = {
             "ledger": "D",
-            "fill": "W",
+            "fill": "7D",
             }
         return pd.date_range(
             self.start_date,
