@@ -11,6 +11,7 @@ import time
 from kucoin._api import apiwrapper
 from kucoin.markets import price_history
 import kucoin._utilities as utils
+import kucoin._messages as messages
 
 # Pandas index slices:
 idx = pd.IndexSlice
@@ -21,10 +22,12 @@ class account(apiwrapper):
         self,
         name,
         api_key_file=None,
+        verbose=True,
         ):
         apiwrapper.__init__(self)
         self.read_keyfile(api_key_file)
         self.name=name
+        self.verbose_flag = verbose
         self.usd_pair="%s-USDT"%name
         self.ledger=pd.DataFrame()
         self.usd_fills=pd.DataFrame()
@@ -36,11 +39,28 @@ class account(apiwrapper):
         self.start_date = di
         self.end_date = de
 
+    def standard_setup(self):
+        if self.name=="USD":
+            self.get_ledger()
+            self.extract_balance_sheet()
+        else:
+            self.get_ledger()
+            self.get_usd_fills()
+            self.extract_deposits()
+            self.extract_balance_sheet()
+            self.extract_performance()
+
     def get_ledger(self):
         date_range = self._discretize_date_range("ledger")
         frames = []
         for start_date in date_range:
             end_date = start_date + timedelta(days=1)
+            messages.ledger(
+                self.verbose_flag,
+                self.name,
+                start_date,
+                end_date,
+                )
             te = int(end_date.timestamp()*1000)
             ti = int(start_date.timestamp()*1000)
             request = utils.ledger_request_url(self.name,ti,te)
@@ -73,6 +93,12 @@ class account(apiwrapper):
         frames = []
         for start_date in date_range:
             end_date = start_date + timedelta(days=7)
+            messages.usd_fills(
+                self.verbose_flag,
+                self.name,
+                start_date,
+                end_date,
+                )
             te = int(end_date.timestamp()*1000)
             ti = int(start_date.timestamp()*1000)
             request = utils.fill_request_url(self.usd_pair,ti,te)
