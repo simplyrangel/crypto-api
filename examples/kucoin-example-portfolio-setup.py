@@ -21,6 +21,7 @@ plt.rcParams.update(
 sys.path.append("/home/johnrangel/Projects/crypto-api")
 from kucoin._api import apiwrapper
 from kucoin.account import account
+from kucoin.markets import price_history
 
 # ------------------------------------------------------------
 # set up portfolio. 
@@ -31,9 +32,9 @@ kuapi = apiwrapper()
 kuapi.read_keyfile(lcc_api_key)
 
 # large cap coin accounts information:
-lcc_accounts = kuapi.query("/api/v1/accounts")
-lcc_accounts = pd.DataFrame(lcc_accounts["data"])
-lcc_accounts.to_excel("bin/kc-accounts.xlsx")
+#lcc_accounts = kuapi.query("/api/v1/accounts")
+#lcc_accounts = pd.DataFrame(lcc_accounts["data"])
+#lcc_accounts.to_excel("bin/kc-accounts.xlsx")
 
 # ------------------------------------------------------------
 # Account ledgers. 
@@ -99,10 +100,10 @@ def ledger_request(currency,di,de):
 
 # let's look at RNDR account ledger:
 di = "2021-11-01"
-de = "2021-11-24"
-#rndr_ledger = ledger_request("RNDR",di,de)
+de = "2021-11-27"
+#coin_ledger = ledger_request("RNDR",di,de)
 #iotx_ledger = ledger_request("IOTX",di,de)
-#rndr_ledger.to_excel("bin/kc-rndr-ledger.xlsx")
+#coin_ledger.to_excel("bin/kc-rndr-ledger.xlsx")
 #iotx_ledger.to_excel("bin/kc-iotx-ledger.xlsx")
 
 # ------------------------------------------------------------
@@ -153,7 +154,7 @@ def fills_request(currency_pair,di,de):
 
 # Let's take a look at RNDR-USDT fills: 
 di = "2021-10-01"
-de = "2021-11-24"
+de = "2021-11-27"
 #rndr_fills = fills_request("RNDR-USDC",di,de)
 #print(rndr_fills)
 
@@ -161,20 +162,34 @@ de = "2021-11-24"
 # KuCoin account() class.
 # ------------------------------------------------------------
 di = "2021-11-01"
-de = "2021-11-24"
+de = "2021-11-27"
 
 # do the same as above, but with the Kucoin account class:
-rndr_account = account("RNDR",lcc_api_key)
-rndr_account.set_date_range(di,de)
-#rndr_account.get_ledger()
-rndr_account.get_usd_fills()
-#rndr_ledger = rndr_account.return_ledger()
-rndr_usd_fills = rndr_account.return_usd_fills()
-print(rndr_usd_fills)
+for coin in ["RNDR","IOTX"]:
+    coin_account = account(coin,lcc_api_key)
+    coin_account.set_date_range(di,de)
+    coin_account.get_ledger()
+    coin_account.get_usd_fills()
+    coin_ledger = coin_account.return_ledger()
+    rndr_usd_fills = coin_account.return_usd_fills()
+    coin_ledger.to_excel("bin/%s-ledger.xlsx"%coin)
+    rndr_usd_fills.to_excel("bin/%s-usd-fills.xlsx"%coin)
 
+    # get USD deposits:
+    coin_account.extract_deposits()
+    coin_usd_deposits = coin_account.return_deposits()
+    print(coin_usd_deposits)
 
+    # get balance sheet:
+    coin_account.extract_balance_sheet()
+    coin_balance_sheet = coin_account.return_balance_sheet()
+    print(coin_balance_sheet)
 
-
+    # get performance data:
+    coin_account.extract_performance()
+    perf = coin_account.return_performance_data()
+    perf.to_excel("bin/%s-performance.xlsx"%coin)
+    print(perf)
 
 
 
