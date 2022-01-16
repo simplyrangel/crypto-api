@@ -50,6 +50,20 @@ class account(apiwrapper):
             self.extract_balance_sheet()
             self.extract_performance()
 
+    def save_as_spreadsheet(self,loc):
+        fi = "%s/%s-kucoin-data.xlsx"%(loc,self.name)
+        with pd.ExcelWriter(fi) as writer:
+            ledger = self.return_ledger()
+            usd_fills = self.return_usd_fills()
+            deposits = self.return_deposits()
+            balance_sheet = self.return_balance_sheet()
+            perf = self.return_performance_data()
+            ledger.to_excel(writer,sheet_name="ledger")
+            usd_fills.to_excel(writer,sheet_name="usd_fills")
+            deposits.to_excel(writer,sheet_name="deposits")
+            balance_sheet.to_excel(writer,sheet_name="balance_sheet")
+            perf.to_excel(writer,sheet_name="portfolio_performance")
+    
     def get_ledger(self):
         date_range = self._discretize_date_range("ledger")
         frames = []
