@@ -96,6 +96,15 @@ class account(apiwrapper):
             for col in ["amount","fee","balance"]:
                 results.loc[:,col] = results[col].apply(float)
             results = results.sort_index()
+            
+            # multiply purchase amounts by negative 1:
+            negid = results[
+                (results.direction=="out")
+                & (results.accountType=="TRADE")
+                ].index
+            results.loc[negid,"amount"] *= -1.0
+            
+            # calculate balance and return:
             results.loc[:,"balance"] = results.amount.cumsum()
             self.ledger=results
     

@@ -25,11 +25,11 @@ class account(
         self.read_keyfile(api_key_file)
         self.name = name
         self.account_id = account_id
-        self.ledger=None
-        self.usd_fills=None
-        self.deposits=None
-        self.balance_sheet=None
-        self.performance_data=None
+        self.ledger=pd.DataFrame()
+        self.usd_fills=pd.DataFrame()
+        self.deposits=pd.DataFrame()
+        self.balance_sheet=pd.DataFrame()
+        self.performance_data=pd.DataFrame()
         self._url_setup()
 
     def standard_setup(self):
